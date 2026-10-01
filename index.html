@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOP & Data Management System - Electronics Lab & Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900 text-white sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
+                    <i class="fas fa-microchip text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">Lab & Shop SOP System</h1>
+                    <p class="text-xs text-slate-400">ระบบตรวจสอบมาตรฐานปฏิบัติงานและประวัติการจัดเก็บข้อมูล</p>
+                </div>
+            </div>
+            
+            <!-- Live Status & Clock -->
+            <div class="hidden sm:flex items-center gap-4 text-xs">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 mr-1.5 rounded-full bg-emerald-400 animate-pulse"></span> Offline Storage Active
+                </span>
+                <span id="liveClock" class="text-slate-400 font-mono bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full">
+        
+        <!-- Navigation Segment Control -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="bg-slate-200/80 p-1.5 rounded-2xl flex gap-1 border border-slate-300/60 shadow-inner max-w-md w-full">
+                <button id="tabBtnChecklist" onclick="switchTab('checklist')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm">
+                    <i class="fas fa-tasks"></i> รายการ Checklist วันนี้
+                </button>
+                <button id="tabBtnHistory" onclick="switchTab('history')" class="flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900">
+                    <i class="fas fa-database"></i> ประวัติข้อมูลจัดเก็บ
+                </button>
+            </div>
+
+            <div class="hidden md:flex gap-2">
+                <button onclick="resetChecklist()" class="text-xs bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium px-3.5 py-2 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                    <i class="fas fa-redo text-slate-400"></i> รีเซ็ตการเช็ค
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= PAGE 1: CHECKLIST DASHBOARD ================= -->
+        <div id="pageChecklist" class="space-y-6">
+            
+            <!-- KPI Metrics Section -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">งานทั้งหมด</p>
+                        <h3 id="statTotal" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600">
+                        <i class="fas fa-list-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">เสร็จสิ้นแล้ว</p>
+                        <h3 id="statCompleted" class="text-2xl font-bold text-emerald-600 mt-1">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                        <i class="fas fa-circle-check"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">ความคืบหน้า</p>
+                        <h3 id="statPercent" class="text-2xl font-bold text-indigo-600 mt-1">0%</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">บันทึกย้อนหลัง</p>
+                        <h3 id="statHistoryCount" class="text-2xl font-bold text-amber-600 mt-1">0</h3>
+                    </div>
+                    <div class="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+                        <i class="fas fa-box-archive"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Layout (Desktop) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- Left Column (2/3): Task List & SOP View -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <h2 class="text-lg font-bold text-slate-800">รายการงานประจำวัน (Daily SOP Checklist)</h2>
+                                <p class="text-xs text-slate-500">คลิกที่รายการเพื่อบันทึกสถานะการปฏิบัติงาน</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar Visualizer -->
+                        <div class="mb-6 bg-slate-100 p-4 rounded-xl border border-slate-200/60">
+                            <div class="flex justify-between text-xs font-semibold text-slate-600 mb-2">
+                                <span>ภาพรวมความพร้อมปฏิบัติงาน</span>
+                                <span id="progressText" class="text-indigo-600">0/0 รายการ</span>
+                            </div>
+                            <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-3 rounded-full transition-all duration-500 shadow-sm" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Tasks List Container -->
+                        <div id="checklistContainer" class="space-y-3">
+                            <!-- JS populate items -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column (1/3): Add Task & Save Daily Record -->
+                <div class="space-y-6">
+                    
+                    <!-- Quick Add Form -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <h3 class="text-base font-bold text-slate-800 mb-1 flex items-center gap-2">
+                            <i class="fas fa-plus-circle text-indigo-600"></i> เพิ่มรายการ Checklist / SOP
+                        </h3>
+                        <p class="text-xs text-slate-500 mb-4">สร้างหัวข้อการตรวจและระบุมาตรฐาน SOP ใหม่</p>
+
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">ชื่องานที่ต้องตรวจ</label>
+                                <input type="text" id="newTitle" placeholder="เช่น ตรวจสอบสายดินโต๊ะทดลอง" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-slate-700 mb-1">ข้อปฏิบัติการทำงาน (SOP)</label>
+                                <textarea id="newSOP" rows="2" placeholder="เช่น ใช้มัลติมิเตอร์วัดค่าความต้านทาน..." class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm transition resize-none"></textarea>
+                            </div>
+
+                            <button onclick="addTask()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl transition shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 text-sm">
+                                <i class="fas fa-plus"></i> เพิ่มรายการประจำวัน
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Complete Day & Save Record CTA -->
+                    <div class="bg-gradient-to-br from-slate-900 to-indigo-950 text-white p-6 rounded-2xl shadow-lg relative overflow-hidden">
+                        <div class="relative z-10 space-y-3">
+                            <div class="inline-flex p-2 bg-white/10 rounded-xl backdrop-blur-sm">
+                                <i class="fas fa-shield-halved text-amber-400 text-xl"></i>
+                            </div>
+                            <h3 class="text-base font-bold">จัดเก็บประวัติการทำงานจบวัน</h3>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                เมื่อปฏิบัติงานครบตาม SOP แล้ว สามารถกดบันทึกเพื่อจัดเก็บข้อมูลประวัติย้อนหลังลงในฐานข้อมูลเครื่อง (Local Storage)
+                            </p>
+                            <button onclick="saveToHistory()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-xl transition shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 text-sm mt-2">
+                                <i class="fas fa-floppy-disk"></i> บันทึกประวัติและสำรองข้อมูล
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ================= PAGE 2: DATA HISTORY INSPECTOR ================= -->
+        <div id="pageHistory" class="hidden space-y-6">
+            
+            <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fas fa-folder-open text-amber-500"></i> ประวัติการจัดเก็บข้อมูลการปฏิบัติงาน (Data Storage Logs)
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">ตรวจสอบบันทึกย้อนหลัง และเรียกดูสถานะรายการ SOP ที่สแนปชอตไว้</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="exportJSON()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium px-3.5 py-2 rounded-xl transition border border-slate-200 flex items-center gap-1.5">
+                        <i class="fas fa-download text-indigo-600"></i> Export JSON
+                    </button>
+                    <button onclick="clearHistory()" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium px-3.5 py-2 rounded-xl transition border border-rose-200 flex items-center gap-1.5">
+                        <i class="fas fa-trash-can"></i> ล้างประวัติทั้งหมด
+                    </button>
+                </div>
+            </div>
+
+            <!-- History Cards Container -->
+            <div id="historyLogsList" class="space-y-4">
+                <!-- JS Populate history entries -->
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4">
+            <p>รายวิชาสัมมนาทางวิศวกรรมคอมพิวเตอร์ | ระบบโปรแกรมต้นแบบ Client-side Static Web Application</p>
+        </div>
+    </footer>
+
+    <script>
+        // ข้อมูลตั้งต้นสำหรับงานวิศวกรรม/อิเล็กทรอนิกส์
+        const defaultTasks = [
+            { id: 1, title: "ตรวจสอบสายไฟและสวิตช์ตัดไฟหลัก (Main Circuit Breaker)", sop: "ตรวจแรงดันไฟ 220V และตรวจสอบระบบสายดินให้อยู่ในสภาวะปลอดภัยก่อนเปิดเครื่องมือ", completed: false, addedAt: "ระบบ" },
+            { id: 2, title: "เช็คสต็อกบอร์ดไมโครคอนโทรลเลอร์และเซนเซอร์", sop: "นับจำนวนบอร์ด Arduino/ESP32 และจัดเก็บลงถุงป้องกันไฟฟ้าสถิต (ESD Shielding Bag)", completed: false, addedAt: "ระบบ" },
+            { id: 3, title: "บำรุงรักษาและทำความสะอาดหัวบัดกรี", sop: "เช็ดปลายหัวบัดกรีด้วยฟองน้ำทนความร้อน เคลือบน้ำยาตะกั่วบางๆ และปิดสวิตช์ไฟหลัก", completed: false, addedAt: "ระบบ" }
+        ];
+
+        // โหลดข้อมูลจาก LocalStorage
+        let tasks = JSON.parse(localStorage.getItem('electronicsSopTasks')) || defaultTasks;
+        let historyLogs = JSON.parse(localStorage.getItem('electronicsSopHistory')) || [];
+
+        // Live Clock
+        function updateClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('liveClock');
+            if(clockEl) {
+                clockEl.innerText = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH');
+            }
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Switch Tab Navigation
+        function switchTab(tab) {
+            const pageChecklist = document.getElementById('pageChecklist');
+            const pageHistory = document.getElementById('pageHistory');
+            const tabBtnChecklist = document.getElementById('tabBtnChecklist');
+            const tabBtnHistory = document.getElementById('tabBtnHistory');
+
+            if (tab === 'checklist') {
+                pageChecklist.classList.remove('hidden');
+                pageHistory.classList.add('hidden');
+                
+                tabBtnChecklist.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm";
+                tabBtnHistory.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+            } else {
+                pageChecklist.classList.add('hidden');
+                pageHistory.classList.remove('hidden');
+                
+                tabBtnHistory.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 bg-white text-indigo-600 shadow-sm";
+                tabBtnChecklist.className = "flex-1 py-2.5 px-4 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-slate-600 hover:text-slate-900";
+                
+                renderHistory();
+            }
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH');
+        }
+
+        function saveTasks() {
+            localStorage.setItem('electronicsSopTasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function addTask() {
+            const titleInput = document.getElementById('newTitle');
+            const sopInput = document.getElementById('newSOP');
+            
+            if (!titleInput.value.trim()) {
+                alert('กรุณากรอกชื่องานก่อนทำการเพิ่ม');
+                return;
+            }
+
+            const newTask = {
+                id: Date.now(),
+                title: titleInput.value.trim(),
+                sop: sopInput.value.trim() || 'ไม่มีข้อปฏิบัติเพิ่มเติม',
+                completed: false,
+                addedAt: getCurrentTime()
+            };
+
+            tasks.push(newTask);
+            saveTasks();
+
+            titleInput.value = '';
+            sopInput.value = '';
+        }
+
+        function toggleTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.completed = !task.completed;
+                saveTasks();
+            }
+        }
+
+        function deleteTask(id, event) {
+            event.stopPropagation();
+            if (confirm('คุณแน่ใจหรือว่าต้องการลบรายการนี้?')) {
+                tasks = tasks.filter(t => t.id !== id);
+                saveTasks();
+            }
+        }
+
+        function resetChecklist() {
+            if (confirm('ล้างเครื่องหมายถูกทั้งหมดเพื่อเริ่มวันใหม่ใช่หรือไม่? (รายการงานจะไม่ถูกลบ)')) {
+                tasks = tasks.map(t => ({ ...t, completed: false }));
+                saveTasks();
+            }
+        }
+
+        function saveToHistory() {
+            if (tasks.length === 0) {
+                alert('ไม่มีรายการงานให้บันทึก');
+                return;
+            }
+
+            const completedCount = tasks.filter(t => t.completed).length;
+            const totalCount = tasks.length;
+            const percentage = Math.round((completedCount / totalCount) * 100);
+
+            const record = {
+                id: Date.now(),
+                date: getCurrentTime(),
+                totalTasks: totalCount,
+                completedTasks: completedCount,
+                percentage: percentage,
+                itemsSnapshot: JSON.parse(JSON.stringify(tasks))
+            };
+
+            historyLogs.unshift(record);
+            localStorage.setItem('electronicsSopHistory', JSON.stringify(historyLogs));
+            
+            tasks = tasks.map(t => ({ ...t, completed: false }));
+            saveTasks();
+            
+            alert('บันทึกประวัติการจัดเก็บข้อมูลเรียบร้อยแล้ว!');
+            switchTab('history');
+        }
+
+        function clearHistory() {
+            if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบประวัติย้อนหลังทั้งหมด?')) {
+                historyLogs = [];
+                localStorage.setItem('electronicsSopHistory', JSON.stringify(historyLogs));
+                renderHistory();
+            }
+        }
+
+        function exportJSON() {
+            if (historyLogs.length === 0) {
+                alert('ยังไม่มีประวัติข้อมูลสำหรับการ Export');
+                return;
+            }
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(historyLogs, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `sop_data_history_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = '';
+            
+            let completedCount = 0;
+
+            if (tasks.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 border-2 border-dashed border-slate-200 rounded-2xl">
+                        <i class="fas fa-clipboard-list text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-500">ไม่มีรายการงานในระบบ</p>
+                        <p class="text-xs text-slate-400 mt-1">สามารถเพิ่มรายการงานใหม่ได้ที่กล่องข้อความฝั่งขวา</p>
+                    </div>`;
+            }
+
+            tasks.forEach(task => {
+                if (task.completed) completedCount++;
+                
+                const taskEl = document.createElement('div');
+                taskEl.className = `p-4 border rounded-2xl cursor-pointer transition-all duration-200 relative group flex items-start justify-between gap-4 ${
+                    task.completed 
+                    ? 'bg-emerald-50/50 border-emerald-200/80 hover:bg-emerald-50' 
+                    : 'bg-white border-slate-200/80 hover:border-slate-300 hover:shadow-sm'
+                }`;
+                taskEl.onclick = () => toggleTask(task.id);
+                
+                taskEl.innerHTML = `
+                    <div class="flex items-start gap-3.5 flex-grow">
+                        <div class="mt-0.5 text-xl flex-shrink-0">
+                            <i class="fas ${task.completed ? 'fa-check-circle text-emerald-500' : 'fa-circle text-slate-300 group-hover:text-slate-400'}"></i>
+                        </div>
+                        <div class="space-y-1">
+                            <h4 class="text-sm font-semibold leading-snug ${task.completed ? 'text-slate-400 line-through' : 'text-slate-800'}">
+                                ${task.title}
+                            </h4>
+                            <div class="text-xs text-slate-500 flex items-center gap-1.5 bg-slate-100/80 px-2.5 py-1 rounded-lg w-fit">
+                                <i class="fas fa-book-open text-indigo-500 text-[10px]"></i>
+                                <span>SOP: ${task.sop}</span>
+                            </div>
+                            ${task.addedAt !== "ระบบ" ? `<p class="text-[10px] text-slate-400 pt-0.5"><i class="far fa-clock"></i> เพิ่มเมื่อ: ${task.addedAt}</p>` : ''}
+                        </div>
+                    </div>
+                    
+                    <button onclick="deleteTask(${task.id}, event)" class="text-slate-300 hover:text-rose-500 p-1.5 transition opacity-0 group-hover:opacity-100">
+                        <i class="fas fa-trash-can text-sm"></i>
+                    </button>
+                `;
+                container.appendChild(taskEl);
+            });
+
+            // Update Statistics
+            const total = tasks.length;
+            const percent = total === 0 ? 0 : Math.round((completedCount / total) * 100);
+
+            document.getElementById('statTotal').innerText = total;
+            document.getElementById('statCompleted').innerText = completedCount;
+            document.getElementById('statPercent').innerText = `${percent}%`;
+            document.getElementById('statHistoryCount').innerText = historyLogs.length;
+
+            document.getElementById('progressBar').style.width = `${percent}%`;
+            document.getElementById('progressText').innerText = `${completedCount}/${total} รายการ (${percent}%)`;
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyLogsList');
+            container.innerHTML = '';
+
+            if (historyLogs.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
+                        <i class="fas fa-inbox text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-sm font-medium text-slate-600">ยังไม่มีประวัติการจัดเก็บข้อมูล</p>
+                        <p class="text-xs text-slate-400 mt-1">เมื่อทำรายการประจำวันเสร็จสิ้น สามารถกดปุ่ม "บันทึกประวัติ" เพื่อเก็บบันทึกได้</p>
+                    </div>`;
+                return;
+            }
+
+            historyLogs.forEach((log) => {
+                const isPerfect = log.percentage === 100;
+                const logEl = document.createElement('div');
+                logEl.className = 'bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition';
+                
+                let itemsListHtml = '';
+                if (log.itemsSnapshot && log.itemsSnapshot.length > 0) {
+                    itemsListHtml = log.itemsSnapshot.map(item => `
+                        <div class="text-xs py-2 px-3 border-b border-slate-100 last:border-b-0 flex justify-between items-center ${item.completed ? 'bg-emerald-50/40 text-slate-700' : 'bg-slate-50 text-slate-400'}">
+                            <span class="flex items-center gap-2">
+                                <i class="fas ${item.completed ? 'fa-check text-emerald-500' : 'fa-xmark text-slate-300'}"></i>
+                                <span class="font-medium">${item.title}</span>
+                            </span>
+                            <span class="text-[11px] text-slate-400">SOP: ${item.sop}</span>
+                        </div>
+                    `).join('');
+                }
+
+                logEl.innerHTML = `
+                    <details class="group">
+                        <summary class="p-4 flex justify-between items-center cursor-pointer bg-slate-50/50 hover:bg-slate-100/60 transition select-none">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-xl ${isPerfect ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'} flex items-center justify-center font-bold text-sm">
+                                    ${log.percentage}%
+                                </div>
+                                <div>
+                                    <div class="font-bold text-sm text-slate-800 flex items-center gap-2">
+                                        <i class="far fa-calendar-alt text-indigo-500"></i> ${log.date}
+                                    </div>
+                                    <div class="text-xs text-slate-500 mt-0.5">สถานะงาน: ปฏิบัติสำเร็จ ${log.completedTasks} จาก ${log.totalTasks} รายการ</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-chevron-down text-slate-400 text-xs transition-transform group-open:rotate-180"></i>
+                            </div>
+                        </summary>
+                        <div class="p-4 border-t border-slate-100 bg-white space-y-2">
+                            <p class="text-xs font-bold text-slate-600 flex items-center gap-1.5">
+                                <i class="fas fa-list-check text-indigo-500"></i> รายละเอียดการตรวจย้อนหลัง:
+                            </p>
+                            <div class="border border-slate-200 rounded-xl overflow-hidden divide-y">
+                                ${itemsListHtml || '<p class="text-xs text-slate-400 p-3">ไม่มีสแนปชอตย่อย</p>'}
+                            </div>
+                        </div>
+                    </details>
+                `;
+                container.appendChild(logEl);
+            });
+        }
+
+        // Initialize Render
+        renderTasks();
+    </script>
+</body>
+</html>
